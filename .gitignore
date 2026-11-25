@@ -1,0 +1,50 @@
+# macOS / OS
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# Editors / IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Go build, binaries, and test artifacts
+/bin/
+/door
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+coverage.txt
+coverage.html
+
+# Door local sandbox & runtime data
+.door-dev/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.log
+logs/
+
+# Frontend dependencies, caches, and generated bundles
+node_modules/
+web/node_modules/
+web/.vite/
+*.tsbuildinfo
+web/dist/*
+!web/dist/.gitkeep
+
+# Local environment & certificates
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt

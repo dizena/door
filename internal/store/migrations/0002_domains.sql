@@ -1,0 +1,97 @@
+-- Domain tables for Runtimes, Projects, Sites, SSL Certificates, and Databases
+
+CREATE TABLE IF NOT EXISTS runtimes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    kind TEXT NOT NULL,
+    version TEXT NOT NULL,
+    install_dir TEXT NOT NULL,
+    binary_path TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'installed',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(kind, version)
+);
+
+CREATE TABLE IF NOT EXISTS projects (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE,
+    lang TEXT NOT NULL,
+    root_dir TEXT NOT NULL,
+    entry TEXT NOT NULL,
+    args TEXT NOT NULL DEFAULT '',
+    runtime_id INTEGER REFERENCES runtimes(id) ON DELETE SET NULL,
+    port INTEGER NOT NULL DEFAULT 0,
+    run_user TEXT NOT NULL DEFAULT 'www',
+    env_json TEXT NOT NULL DEFAULT '{}',
+    service_name TEXT NOT NULL UNIQUE,
+    status TEXT NOT NULL DEFAULT 'stopped',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS ssl_certs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    domain TEXT NOT NULL,
+    provider TEXT NOT NULL,
+    email TEXT NOT NULL DEFAULT '',
+    cert_path TEXT NOT NULL,
+    key_path TEXT NOT NULL,
+    expires_at DATETIME NOT NULL,
+    auto_renew INTEGER NOT NULL DEFAULT 1,
+    status TEXT NOT NULL DEFAULT 'active',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS sites (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    domain TEXT NOT NULL UNIQUE,
+    extra_domains TEXT NOT NULL DEFAULT '',
+    listen_port INTEGER NOT NULL DEFAULT 80,
+    site_type TEXT NOT NULL,
+    root_dir TEXT NOT NULL DEFAULT '',
+    proxy_pass TEXT NOT NULL DEFAULT '',
+    ssl_enabled INTEGER NOT NULL DEFAULT 0,
+    ssl_cert_id INTEGER REFERENCES ssl_certs(id) ON DELETE SET NULL,
+    config_path TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'enabled',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS db_instances (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    engine TEXT NOT NULL UNIQUE,
+    version TEXT NOT NULL,
+    port INTEGER NOT NULL,
+    install_dir TEXT NOT NULL,
+    data_dir TEXT NOT NULL,
+    config_path TEXT NOT NULL,
+    service_name TEXT NOT NULL UNIQUE,
+    root_user TEXT NOT NULL DEFAULT '',
+    root_password TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'stopped',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS db_schemas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    instance_id INTEGER NOT NULL REFERENCES db_instances(id) ON DELETE CASCADE,
+    db_name TEXT NOT NULL,
+    db_user TEXT NOT NULL DEFAULT '',
+    privileges TEXT NOT NULL DEFAULT 'ALL',
+    charset TEXT NOT NULL DEFAULT 'utf8mb4',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(instance_id, db_name)
+);
+
+CREATE TABLE IF NOT EXISTS db_backups (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    instance_id INTEGER NOT NULL REFERENCES db_instances(id) ON DELETE CASCADE,
+    db_name TEXT NOT NULL,
+    file_path TEXT NOT NULL,
+    size_bytes INTEGER NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'completed',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
